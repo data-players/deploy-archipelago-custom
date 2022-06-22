@@ -22,7 +22,7 @@ services:
       - ./middleware/logs:/archipelago/middleware/logs
       - ./middleware/jwt:/archipelago/middleware/jwt
       - ./middleware/uploads:/archipelago/middleware/uploads
-      - ./../archipelago/middleware/:/app
+      - ../archipelago/middleware/:/app
       - ./deploy/middleware/app/ecosystem.config.js/:/app/ecosystem.config.js
     environment:
       - SEMAPPS_SPARQL_ENDPOINT=http://fuseki:3030/
@@ -44,7 +44,7 @@ services:
       context: ./deploy/frontend
       dockerfile: Dockerfile
     volumes:
-      - ./../archipelago/frontend/:/app
+      - ../archipelago/frontend/:/app
     environment:
       - REACT_APP_MIDDLEWARE_URL=http://localhost:3000/
       - REACT_APP_MAPBOX_ACCESS_TOKEN=MyMapBoxToken
