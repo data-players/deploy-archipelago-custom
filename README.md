@@ -1,64 +1,92 @@
 # deploye-archipelago-custom
 
 If you need a total custom archipelago with modification, this is the good place to be.
-However, if you only want a classic archipelago and change only the title and colors, use this repos https://github.com/data-players/deploy-archipelago-classic
+However, if you only want a classic archipelago and make only little modifications, use this repos https://github.com/data-players/deploy-archipelago-classic
 
 ### introduction
 
-First make sur you get docker and docker-compose install on your server
-Make sure you have an usable domain name, then create 2 sub-domain for middleware and frontend (Exemple data.myDomain.com and myDomain.com)
-Of course you need a server working with linux and get acess it. (ssh is one the way)
+First make sur you get docker, docker-compose and git install on your linux server.
+Make sure you have an usable domain name, then create 3 sub-domain :
+- middleware (Exemple : data.myDomain.com)
+- frontend (Exemple : myDomain.com)
+- authentification (Exemple login.myDomain.com)
 
 ### 1 Fork archipelago and clone this repos on your server
 
 First you have to fork archipelago on your own repos. To do it, just go to https://github.com/assemblee-virtuelle/archipelago and click fork (Up right). then select your git account and fork.
 Now you can git clone your new archipelago forked on your linux server.
 
-Newt stape, you have to clone the deploy-archipelago-custom reppos from this address : https://github.com/data-players/deploy-archipelago-custom
+Next stape, you have to fork the deploy-archipelago-custom repos from this address : https://github.com/data-players/deploy-archipelago-custom and clone it newt to your archipelago directory.
 
 Now you have two directory next to each other on your server : "your-forked-archipelago" and deploy-archipelago-custom
 
-### 2 Archipelago custom
+### 2 local test and custom
 
-It is better to custom your own archipelago localy.
-So check the archipelago's readme and set up your local environement (there is a quick tutorial) 
-Create your dream archipelago, test it and push it to git !
+To customize your own instance, it is preferable to work locally. So use the docker-compose-dev
+```
+docker-compose -f docker-compose-dev.yaml up -d
+```
+Frontend on http://localhost:4000/
+Middleware on http://localhost:3000/
+Fuseki database on http://localhost:3030 (user: admin, password : admin)
+keycloak on http://localhost:8080 (Keycloak is a custom OIDC)
+You will get an error when creating some organisation :
+```
+index.js:209 Error: @semapps/geo-components : No access token in mapbox configuration
+```
+This is because MapBox Access Token is not define in the docker-compose file. This is not really a problem for local testing.
+But you will need it to develop and test all the features (Obtain an access token : https://docs.mapbox.com/help/getting-started/access-tokens/).
 
-### 3 Change exemple variable
+Now you can work on your customisation.
 
-Go to the deploy-archipelago-customdirectory.
+## 3 Deploying on internet
+
 Some variables in the docker-compose file are default values. You need to replace them with yours to make it works.
-- line 19 myEmail@myemail.fr
-- line 40 MyFusekiPassword
-- line 57 MyJenaPassword
-- line 58 https://data.myDomain.com/ middleware URL
+- line 18 myEmail@myemail.fr
+- line 39 MyJenaPassword
+- line 58 MyJenaPassword
+- line 59 https://data.myDomain.com/ (middleware URL)
 - line 68 data.myDomain.com (middleware domain name)
-- line 82 https://data.myDomain.com/ middleware URL
-- line 83 MyMapBoxToken
-- line 92 myDomain.com (Your domain name)
+- line 77 https://data.myDomain.com/ (middleware URL)
+- line 78 MyMapBoxToken (obtain an access token : https://docs.mapbox.com/help/getting-started/access-tokens/)
+- line 89 myDomain.com (Your domain name)
+- line 97 myKeycloakPassword (To access OIDC amdin page)
+- line 99 https://login.myDomain.com/auth (Login URL)
+- line 116 login.mydomain.com (Login domain name)
 
-Of course you have to set up ur domain name and sub domain name to make it works !
+Of course you have to set up your domain name and sub domain name in your domain provider to make it works !
 
-### 4 Try it yourself
-
-Now go to deploy-archipelago-custom directory
+## 4 Launch your archipelago
 
 Launch your app by making a 
+
 ```
-docker-compose build
+docker-compose up -d
 ```
 
-then launch your app
-```
-docker-compose up -d --force-recreate
-```
+If you need to force dockers to restart add : --force-recreate
 
-Now it's time to check your app by going on your domain name in your faforite browser !
-Grontalution !
+Check in your favorite browser if it's work.
+
+Before testing your new app, you must configurate your OIDC to autorize connexion from your domain name "data" (See environement variable line 67 above).
+Go to https://login.mydomain.com/auth and click on administration console. Connect with admin and "myKeycloakPassword".
+On the left panel, click on Clients, then semapps as client ID.
+If you scroll down, you must see a line "Valid Redirect URIs. Add your middleware address + "/*" (exemple : https://data.mydomain.com/*)
+
+### 5 DEploying modifications
+
+Pull your modification on your server then :
+```
+docker-compose down
+docker-compose up -d
+```
 
 ### 5 Custom with a linked Semapps
 
-INCOMING EARLY !
+If you need to use a local semapps to work on instead of npm package, you can use the docker-compose-link.yaml file.
+Before this, you need to git clone https://github.com/assemblee-virtuelle/semapps next to the two others directories.
 
-## Deploye a custom archipelago version
+```
+docker-compose -f docker-compose-link.yaml up -d
+```
 

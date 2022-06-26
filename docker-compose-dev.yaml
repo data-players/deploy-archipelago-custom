@@ -53,7 +53,7 @@ services:
       - semapps
     ports:
       - "4000:4000"
-    command: bash -c "yarn build && serve -s build"
+    command: bash -c "yarn build && yarn run dev"
 
   redis:
     image: redis

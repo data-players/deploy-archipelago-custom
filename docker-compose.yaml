@@ -2,7 +2,6 @@ version: '3.5'
 services:
   traefik:
     image: "traefik:v2.3"
-    container_name: "traefik-custom"
     networks:
       - semapps
     command:
@@ -43,21 +42,21 @@ services:
     build:
       context: ../archipelago/middleware
       dockerfile: ../../deploy-archipelago-custom/deploy/middleware/Dockerfile
-    container_name: middleware-custom
     depends_on:
       - fuseki
+      - keycloak
     volumes:
       - ./middleware/logs:/archipelago/middleware/logs
       - ./middleware/jwt:/archipelago/middleware/jwt
       - ./middleware/uploads:/archipelago/middleware/uploads
       - ./deploy/middleware/app/ecosystem.config.js:/app/ecosystem.config.js
     environment:
-      - SEMAPPS_SPARQL_ENDPOINT=http://fuseki-custom:3030/
+      - SEMAPPS_SPARQL_ENDPOINT=http://fuseki:3030/
       - SEMAPPS_MAIN_DATASET=localData
       - SEMAPPS_JENA_USER=admin
-      - SEMAPPS_JENA_PASSWORD=MyJenaPassword
+      - SEMAPPS_JENA_PASSWORD=MyFusekiPassword
       - SEMAPPS_HOME_URL=https://data.myDomain.com/
-      - SEMAPPS_OIDC_ISSUER=https://login.lescommuns.org//auth/realms/master/
+      - 'SEMAPPS_OIDC_ISSUER=http://keycloak:8080/auth/realms/DP/'
       - SEMAPPS_OIDC_CLIENT_ID=semapps
       - SEMAPPS_REDIS_URL=redis://redis:6379/0
     networks:
@@ -74,11 +73,12 @@ services:
     build:
       context: ../archipelago/frontend
       dockerfile: ../../deploy-archipelago-custom/deploy/frontend/Dockerfile
-    container_name: frontend-custom
     environment:
       - REACT_APP_MIDDLEWARE_URL=https://data.myDomain.com/
       - REACT_APP_MAPBOX_ACCESS_TOKEN=MyMapBoxToken
       - PORT=4000
+    volumes:
+      - ../archipelago/frontend/:/app
     networks:
       - semapps
     expose:
@@ -90,9 +90,47 @@ services:
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
 
+keycloak:
+    image: jboss/keycloak
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: myKeycloakPassword
+      KEYCLOAK_IMPORT: /tmp/realm-export.json
+      KEYCLOAK_FRONTEND_URL: 'https://login.myDomain.com/auth'
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_SCHEMA: public
+      DB_PASSWORD: password
+    depends_on:
+      - postgres
+    volumes:
+      - './deploy/keycloak/realm-export.json:/tmp/realm-export.json'
+    ports:
+      - '8080:8080'
+    networks:
+      - semapps
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`login.myDomain.com`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
+
+  postgres:
+    image: postgres
+    volumes:
+      - './keycloak/postgres:/var/lib/postgresql/data'
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    networks:
+      - semapps
+
   redis:
     image: redis
-    container_name: redis-custom
+    container_name: redis
     expose:
       - "6379"
     volumes:
