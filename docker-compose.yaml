@@ -1,33 +1,7 @@
 version: '3.5'
 services:
-  traefik:
-    image: "traefik:v2.3"
-    networks:
-      - semapps
-    command:
-      # - "--log.level=DEBUG"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=myEmail@myemail.fr"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-    ports:
-      - "80:80"
-      - "443:443"
-      # - "8080:8080"
-    volumes:
-      - "./data/letsencrypt:/letsencrypt"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-
   fuseki:
     image: semapps/jena-fuseki-webacl
-    container_name: fuseki-custom
     volumes:
       - ./data/fuseki:/fuseki
       - ./data/staging:/staging
@@ -36,67 +10,83 @@ services:
     networks:
       - semapps
     environment:
-      ADMIN_PASSWORD: "MyFusekiPassword"
+      ADMIN_PASSWORD: "admin"
+
+  fuseki_compact:
+    image: semapps/jena-fuseki-webacl:latest
+    entrypoint: /docker-compact-entrypoint.sh
+    profiles: 
+      - compact
+    volumes:
+      - ./data/fuseki:/fuseki
 
   middleware:
     build:
-      context: ../archipelago/middleware
-      dockerfile: ../../deploy-archipelago-custom/deploy/middleware/Dockerfile
+      context: ./deploy/middleware
+      dockerfile: Dockerfile
     depends_on:
       - fuseki
-      - keycloak
     volumes:
       - ./middleware/logs:/archipelago/middleware/logs
       - ./middleware/jwt:/archipelago/middleware/jwt
       - ./middleware/uploads:/archipelago/middleware/uploads
-      - ./deploy/middleware/app/ecosystem.config.js:/app/ecosystem.config.js
+      - ../archipelago/middleware/:/app
+      - ./deploy/middleware/app/ecosystem.config.js/:/app/ecosystem.config.js
+      - ./data/fuseki/backups:/app/fuseki_backup
     environment:
       - SEMAPPS_SPARQL_ENDPOINT=http://fuseki:3030/
       - SEMAPPS_MAIN_DATASET=localData
       - SEMAPPS_JENA_USER=admin
-      - SEMAPPS_JENA_PASSWORD=MyFusekiPassword
-      - SEMAPPS_HOME_URL=https://data.myDomain.com/
-      - 'SEMAPPS_OIDC_ISSUER=http://keycloak:8080/auth/realms/DP/'
+      - SEMAPPS_JENA_PASSWORD=admin
+      - SEMAPPS_HOME_URL=http://localhost:3000/
+      - SEMAPPS_OIDC_ISSUER=http://keycloak:8080/auth/realms/DP/
       - SEMAPPS_OIDC_CLIENT_ID=semapps
       - SEMAPPS_REDIS_URL=redis://redis:6379/0
+      - SEMAPPS_BACKUP_FUSEKI_DATASETS_PATH=/app/fuseki_backup/
+      - SEMAPPS_FTP_HOST=dataplayers.exavault.com
+      - SEMAPPS_FTP_PORT=22
+      - SEMAPPS_FTP_USER=dataplayers
+      - SEMAPPS_FTP_PASSWORD=D4t4Pl4yers
+      - SEMAPPS_FTP_PATH=/backup/test/backups/
     networks:
       - semapps
-    expose:
-      - "3000"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.middleware.rule=Host(`data.myDomain.com`)"
-      - "traefik.http.routers.middleware.entrypoints=websecure"
-      - "traefik.http.routers.middleware.tls.certresolver=myresolver"
+    ports:
+      - "3000:3000"
+    command: bash -c "yarn install && pm2-runtime 'yarn run dev'"
 
   frontend:
     build:
-      context: ../archipelago/frontend
-      dockerfile: ../../deploy-archipelago-custom/deploy/frontend/Dockerfile
-    environment:
-      - REACT_APP_MIDDLEWARE_URL=https://data.myDomain.com/
-      - REACT_APP_MAPBOX_ACCESS_TOKEN=MyMapBoxToken
-      - PORT=4000
+      context: ./deploy/frontend
+      dockerfile: Dockerfile
     volumes:
       - ../archipelago/frontend/:/app
+    environment:
+      - REACT_APP_MIDDLEWARE_URL=http://localhost:3000/
+      - REACT_APP_MAPBOX_ACCESS_TOKEN=MyMapBoxToken
+      - PORT=4000
     networks:
       - semapps
-    expose:
-      - "4000"
+    ports:
+      - "4000:4000"
     command: bash -c "yarn build && serve -s build"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`myDomain.com`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
 
-keycloak:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis_data:/data
+    networks:
+      - semapps
+    command: ["redis-server", "--appendonly", "yes"]
+
+  keycloak:
     image: jboss/keycloak
     environment:
       KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: myKeycloakPassword
+      KEYCLOAK_PASSWORD: admin
       KEYCLOAK_IMPORT: /tmp/realm-export.json
-      KEYCLOAK_FRONTEND_URL: 'https://login.myDomain.com/auth'
+      KEYCLOAK_FRONTEND_URL: 'http://localhost:8080/auth'
       DB_VENDOR: POSTGRES
       DB_ADDR: postgres
       DB_DATABASE: keycloak
@@ -111,12 +101,7 @@ keycloak:
       - '8080:8080'
     networks:
       - semapps
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`login.myDomain.com`)"
-      - "traefik.http.routers.keycloak.entrypoints=websecure"
-      - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
-
+      
   postgres:
     image: postgres
     volumes:
@@ -128,17 +113,6 @@ keycloak:
     networks:
       - semapps
 
-  redis:
-    image: redis
-    container_name: redis
-    expose:
-      - "6379"
-    volumes:
-      - ./data/redis_data:/data
-    networks:
-      - semapps
-    command: ["redis-server", "--appendonly", "yes"]
-
 networks:
   semapps:
-    name: semapps_network
+      name: semapps_network
