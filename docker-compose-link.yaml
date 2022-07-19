@@ -38,7 +38,7 @@ services:
       - semapps
     ports:
       - "3000:3000"
-    command: bash -c "yarn --cwd ./../semapps/src/middleware run link-all && yarn run link-semapps-packages && yarn install && pm2-runtime 'yarn run dev'"
+    command: bash -c "yarn --cwd ./../semapps/src/middleware install &&  yarn --cwd ./../semapps/src/middleware run link-all && yarn run link-semapps-packages && yarn install && pm2-runtime 'yarn run dev'"
 
   frontend:
     build:
@@ -46,6 +46,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../archipelago/frontend/:/app
+      - ./../semapps:/semapps
     environment:
       - REACT_APP_MIDDLEWARE_URL=http://localhost:3000/
       - REACT_APP_MAPBOX_ACCESS_TOKEN=MyMapBoxToken
@@ -54,7 +55,7 @@ services:
       - semapps
     ports:
       - "4000:4000"
-    command: bash -c "yarn build && serve -s build"
+    command: bash -c "yarn --cwd ./../semapps/src/frontend install && yarn --cwd ./../semapps/src/frontend run link-all && yarn run link-semapps-packages && yarn build && serve -s build"
 
   redis:
     image: redis
@@ -87,7 +88,7 @@ services:
       - '8080:8080'
     networks:
       - semapps
-      
+
   postgres:
     image: postgres
     volumes:
