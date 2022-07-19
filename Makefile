@@ -31,6 +31,9 @@ stop-link:
 compact: 
 	$(DC) down && $(DC) up fuseki_compact && $(DC) up -d
 
+compact-prod:
+	$(DC) -f $(prod) down && $(DC) -f $(prod) up fuseki_compact && $(DC) -f $(prod) up -d
+
 set-compact-cron: 
 	(crontab -l 2>/dev/null; echo "* * * * * $(path-cron) >> /tmp/cronlog.txt") | crontab -
 
