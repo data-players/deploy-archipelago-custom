@@ -87,7 +87,7 @@ services:
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
 
-keycloak:
+  keycloak:
     image: jboss/keycloak
     environment:
       KEYCLOAK_USER: admin
