@@ -80,7 +80,7 @@ services:
       - semapps
     expose:
       - "4000"
-    command: bash -c "yarn build && serve -s build"
+    command: bash -c "serve -s build"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`myDomain.com`)"
