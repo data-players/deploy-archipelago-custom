@@ -2,6 +2,7 @@ DC= docker-compose
 path-cron = $(shell pwd)/compact-cron.sh
 path-cron-dev = $(shell pwd)/compact-cron-dev.sh
 dev= docker-compose -f docker-compose-dev.yaml
+link= docker-compose -f docker-compose-link.yaml
 
 build:
 	$(DC) build --no-cache
@@ -43,10 +44,10 @@ compact-dev:
 	$(dev) down && $(dev) up fuseki_compact && $(dev) up -d
 
 start-link: 
-	$(DC) -f $(link) up -d
+	$(link) up -d
 
 stop-link: 
-	$(DC) -f $(link) down
+	$(link) down
 
 set-compact-cron: 
 	(crontab -l 2>/dev/null; echo "0 4 * * * $(path-cron) >> /tmp/cronlog.txt") | crontab -

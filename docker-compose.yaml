@@ -35,6 +35,14 @@ services:
     environment:
       ADMIN_PASSWORD: "MyFusekiPassword"
 
+  fuseki_compact:
+    image: semapps/jena-fuseki-webacl:latest
+    entrypoint: /docker-compact-entrypoint.sh
+    profiles: 
+      - compact
+    volumes:
+      - ./data/fuseki:/fuseki
+
   middleware:
     build:
       context: ../archipelago/middleware
