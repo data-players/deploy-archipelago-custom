@@ -51,7 +51,7 @@ services:
   frontend:
     build:
       context: ./deploy/frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
       - ../archipelago/frontend/:/app
       - ./../semapps:/semapps

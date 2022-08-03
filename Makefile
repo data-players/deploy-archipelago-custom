@@ -1,59 +1,62 @@
-DC= docker-compose
-path-cron = $(shell pwd)/compact-cron.sh
-path-cron-dev = $(shell pwd)/compact-cron-dev.sh
-dev= docker-compose -f docker-compose-dev.yaml
+path-cron-prod = $(shell pwd)/compact-cron.sh
+path-cron-local = $(shell pwd)/compact-cron-local.sh
+local= docker-compose -f docker-compose-local.yaml
+prod= docker-compose -f docker-compose-prod.yaml
 link= docker-compose -f docker-compose-link.yaml
 
-build:
-	$(DC) build --no-cache
+build-prod:
+	$(prod) build --no-cache
 
-build-dev:
-	$(dev) build --no-cache
+build-local:
+	$(local) build --no-cache
 
-start: 
-	$(DC) up -d
+build-prod:
+	$(link) build --no-cache
 
-stop: 
-	$(DC) down
+build-dockerhub:
+	docker-compose -f docker-compose-dockerhub.yaml build
 
-logs:
-	$(DC) logs -f
+start-prod: 
+	$(prod) up -d --force-recreate
 
-logs-dev:
-	$(dev) logs -f
+stop-prod: 
+	$(prod) down
 
-start-dev: 
-	$(dev) up -d
+logs-prod:
+	$(prod) logs -f
 
-stop-dev: 
-	$(dev) down
+logs-local:
+	$(local) logs -f
 
-start-dockerfile: 
-	$(dockerfile) up -d
+start-local: 
+	$(local) up -d --force-recreate
 
-stop-dockerfile: 
-	$(dockerfile) down
-
-logs-dockerfile:
-	$(dockerfile) logs -f
-
-compact: 
-	$(DC) down && $(DC) up fuseki_compact && $(DC) up -d
-
-compact-dev:
-	$(dev) down && $(dev) up fuseki_compact && $(dev) up -d
+stop-local: 
+	$(local) down
 
 start-link: 
-	$(link) up -d
+	$(link) up -d --force-recreate
 
 stop-link: 
 	$(link) down
 
-set-compact-cron: 
-	(crontab -l 2>/dev/null; echo "0 4 * * * $(path-cron) >> /tmp/cronlog.txt") | crontab -
+logs-link:
+	$(link) logs -f
 
-set-compact-cron-dev: 
-	(crontab -l 2>/dev/null; echo "0 4 * * * $(path-cron-dev) >> /tmp/cronlog.txt") | crontab -
+restart-prod:
+	$(link) down && $(link) up -d
+
+compact-prod: 
+	$(prod) down && $(prod) up fuseki_compact && $(prod) up -d
+
+compact-local:
+	$(local) down && $(local) up fuseki_compact && $(local) up -d
+
+set-compact-cron-prod: 
+	(crontab -l 2>/local/null; echo "0 4 * * * $(path-cron-prod) >> /tmp/cronlog.txt") | crontab -
+
+set-compact-cron-local: 
+	(crontab -l 2>/local/null; echo "0 4 * * * $(path-cron-local) >> /tmp/cronlog.txt") | crontab -
 
 prune-data:
 	sudo rm -rf ./data

@@ -57,7 +57,7 @@ services:
   frontend:
     build:
       context: ./deploy/frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
       - ../archipelago/frontend/:/app
     environment:
@@ -68,7 +68,6 @@ services:
       - semapps
     ports:
       - "4000:4000"
-    command: bash -c "yarn build && serve -s build"
 
   redis:
     image: redis

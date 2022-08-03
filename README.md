@@ -24,7 +24,7 @@ Now you have two directory next to each other on your server : "your-forked-arch
 
 To customize your own instance, it is preferable to work locally. So use the docker-compose-dev
 ```
-docker-compose -f docker-compose-dev.yaml up -d
+make start-local
 ```
 Frontend on http://localhost:4000/
 Middleware on http://localhost:3000/
@@ -61,7 +61,7 @@ Of course you have to set up your domain name and sub domain name in your domain
 Launch your app by making a 
 
 ```
-docker-compose up -d
+make start-prod
 ```
 
 If you need to force dockers to restart add : --force-recreate
@@ -73,15 +73,14 @@ Go to https://login.mydomain.com/auth and click on administration console. Conne
 On the left panel, click on Clients, then semapps as client ID.
 If you scroll down, you must see a line "Valid Redirect URIs. Add your middleware address + "/*" (exemple : https://data.mydomain.com/*)
 
-### 5 DEploying modifications
+## 5 DEploying modifications
 
 Pull your modification on your server then :
 ```
-docker-compose down
-docker-compose up -d
+make start-prod
 ```
 
-### 5 Custom with a linked Semapps
+## 6 Custom with a linked Semapps
 
 If you need to use a local semapps to work on instead of npm package, you can use the docker-compose-link.yaml file.
 Before this, you need to git clone https://github.com/assemblee-virtuelle/semapps next to the two others directories.
@@ -90,3 +89,8 @@ Before this, you need to git clone https://github.com/assemblee-virtuelle/semapp
 docker-compose -f docker-compose-link.yaml up -d
 ```
 
+## 7 Other
+
+### ecosystem.config.js
+
+You can easily custom your own ecosystem.config by editing the one in ./deploy/middleware/app/
