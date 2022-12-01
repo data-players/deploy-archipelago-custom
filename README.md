@@ -9,7 +9,7 @@ First make sur you get docker, docker-compose and git install on your linux serv
 Make sure you have an usable domain name, then create 3 sub-domain :
 - middleware (Exemple : data.myDomain.com)
 - frontend (Exemple : myDomain.com)
-- authentification (Exemple login.myDomain.com)
+- authentification (Exemple login.myDomain.com)(optional if you use sso and want domain login with same root than your app)
 
 ### 1 Fork archipelago and clone this repos on your server
 
