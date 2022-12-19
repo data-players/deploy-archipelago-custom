@@ -2,7 +2,7 @@
 
 If you need a total custom archipelago with modification, this is the good place to be.
 
-However, if you only want a classic archipelago and make only little modifications, use this repos https://github.com/data-players/deploy-archipelago-classic
+However, if you only want a classic archipelago and make only little modifications, use this repos https://github.com/data-players/deploy-archipelago-classic.Tthe readme of this repocontains useful additional technicals informations.
 
 ### introduction
 
