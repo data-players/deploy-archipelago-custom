@@ -1,4 +1,4 @@
-# deploye-archipelago-custom
+# deploy-archipelago-custom
 
 If you need a total custom archipelago with modification, this is the good place to be.
 
